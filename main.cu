@@ -49,7 +49,7 @@ void copyGPU(float *to, float *from, int size, cudaMemcpyKind op) {
 }
 int main()
 {
-    size_t size= (size_t)DIMENSIONE*DIMENSIONE*sizeof(float);
+    size_t size= (size_t)gridRows*gridCols*sizeof(float);
     float *matPrev = (float *) malloc(size);
     float *matNext = (float *) malloc(size);
 
