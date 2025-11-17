@@ -59,38 +59,59 @@ int main()
     mallocGPU(&deviceMatPrev, size, true);
     mallocGPU(&deviceMatNext, size, true);
 
-    // TODO: initMat
-    dim3 blockDim(DIMENSIONE, DIMENSIONE);
-    dim3 gridDim((DIMENSIONE + DIMENSIONE - 1) / DIMENSIONE, 
-                 (DIMENSIONE + DIMENSIONE - 1) / DIMENSIONE);
-    initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, DIMENSIONE, DIMENSIONE, 20, 2,2);
-    cudaDeviceSynchronize();
-    printf("Accesso dalla CPU all'elemento [0][0]: %f\n", deviceMatPrev[0]);
-    printMatrix(deviceMatPrev, DIMENSIONE, DIMENSIONE);
-
-    // TODO: salvataggio su file iniziale
-
-    // inizio timer CUDA
-
-//    for (size_t i=1; i <=nStep; i++)
-//    {
-//        // TODO  update region
-//        kernelHeatGlobal<<<,>>>();
-//        // TODO swap buffer
-//        swapBuffers(deviceMatNext, deviceMatNext);
-//
-//    }
-//
-    // fine timer CUDA
-
-    // stampa tempo
-
-    // salva su file finale
-
-    // delete
-
-
     
+    int threadsInit = 1024;
+    int blocksInit = (int)(((size/ sizeof(float)) + threadsInit - 1) / threadsInit);
+
+    initTemperature<<<blocksInit,threadsInit>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+    cudaDeviceSynchronize();
+
+    //salva su file
+
+    int dims[]={8,16,32};
+    for (size_t i = 0; i < 3; i++)
+    {
+        for (size_t j = 0; j < 3; j++)
+        {
+            int dim1 = dims[i]; 
+            int dim2 = dims[j]; 
+
+            
+            if (dim1 * dim2 > 1024)
+            {
+                continue; 
+            }
+
+            dim3 blockDim(dim1, dim2);
+            dim3 gridDim((gridCols + dim1 - 1) / dim1, 
+                         (gridRows + dim2 - 1) / dim2);
+
+            initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+            cudaDeviceSynchronize();
+
+            // salva su file
+
+            cudaEvent_t start, stop;
+            cudaEventCreate(&start);
+            cudaEventCreate(&stop);
+            cudaEventRecord(start,0);
+
+            for (size_t i = 0; i < nStep; i++)
+            {
+                // chiama kernel
+            }
+
+            cudaEventRecord(stop,0);
+            cudaEventSynchronize(stop);
+
+            float ms=0.0f;
+            cudaEventElapsedTime(&ms, start, stop);
+            cudaEventDestroy(start);
+            cudaEventDestroy(stop);
+            
+            // salvo su file
+        }
+    }
 
 
 
