@@ -1,4 +1,4 @@
 #!/bin/bash
 
 
-nvcc main.cu -Iinclude -o main
+nvcc main.cu init.cu -Iinclude -o main
