@@ -5,7 +5,13 @@
 #include <string.h>
 #include "salva.h"
 
-void saveTemparature(const char* file_base_name, const char* file_extension, unsigned int step, double* gridTemperature, unsigned int nRows, unsigned int nCols, unsigned int fieldW)
+void saveTemparature(const char* fileBaseName, 
+                     const char* fileExtension, 
+                     unsigned int step, 
+                     float* gridTemperature, 
+                     unsigned int nRows, 
+                     unsigned int nCols, 
+                     unsigned int fieldW)
 {
     char* filename = NULL;
     FILE* file = NULL;
@@ -13,7 +19,7 @@ void saveTemparature(const char* file_base_name, const char* file_extension, uns
 
     int step_len = snprintf(NULL, 0, "%u", step);
     
-    len = strlen(file_base_name) + strlen("_step_") + step_len + strlen(file_extension) + 1;
+    len = strlen(fileBaseName) + strlen("_step_") + step_len + strlen(fileExtension) + 1;
 
     filename = (char*)malloc(len);
     if (filename == NULL) {
@@ -21,7 +27,7 @@ void saveTemparature(const char* file_base_name, const char* file_extension, uns
         return;
     }
 
-    snprintf(filename, len, "%s_step_%u%s", file_base_name, step, file_extension);
+    snprintf(filename, len, "%s_step_%u%s", fileBaseName, step, fileExtension);
 
     file = fopen(filename, "w");
 

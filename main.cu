@@ -10,6 +10,7 @@
 #define outFilePrefix "Temperature"
 #define outFileExtension ".dat"
 
+#include "include/utility.h"
 int main()
 {
     size_t size= (size_t)gridRows*gridCols*sizeof(float);
@@ -31,7 +32,10 @@ int main()
     for (size_t i=1; i <=nStep; i++)
     {
         // TODO  update region
+        kernelHeatGlobal<<<,>>>();
         // TODO swap buffer
+        swapBuffers(deviceMatNext, deviceMatNext);
+
     }
 
     // fine timer CUDA
