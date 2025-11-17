@@ -8,7 +8,7 @@
 void saveTemparature(const char* fileBaseName, 
                      const char* fileExtension, 
                      unsigned int step, 
-                     double* gridTemperature, 
+                     float* gridTemperature, 
                      unsigned int nRows, 
                      unsigned int nCols, 
                      unsigned int fieldW)
