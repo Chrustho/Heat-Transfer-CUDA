@@ -1,3 +1,4 @@
+#include "include/init.cuh"
 __global__ void initTemperature(float *mat, 
                                 unsigned int rows, 
                                 unsigned int cols, 

@@ -54,8 +54,7 @@
 void printMatrix(float *mat, int w, int h) {
     for(int i = 0; i < w*h; i++) {
         printf("%f\t", mat[i]);
-        if( (i+1) % w == 0 && i != 0) {
-          printf("\n");
-        }
+        if( i % w == 0 && i != 0)
+            printf("\n");
     }
 }

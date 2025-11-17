@@ -10,9 +10,43 @@
 #define outFilePrefix "Temperature"
 #define outFileExtension ".dat"
 #define DIMENSIONE 8
-
+#define G_MALLOC_ERROR -1
+#define G_COPY_ERROR -2
 #include "include/utility.h"
-#include "init.cu"
+#include "include/init.cuh"
+/**
+* Metodo per l'allocazione di un'area di memoria sulla GPU
+* Input: d, puntatore ad un puntatore di buffer di memoria
+         qnt, quanto allocare
+         isManaged, se l'area di memoria deve essere condivisa tra CPU e GPU
+*/
+void mallocGPU(float **d, int qnt, bool isManaged) {
+
+    cudaError_t status;
+    if(!isManaged)
+        status = cudaMalloc((void **) d, (size_t) qnt);
+    else 
+        status = cudaMallocManaged((void**) d,qnt);
+
+    if(status != cudaSuccess) {
+        printf("Errore nell'allocazione di memoria sulla GPU: %s\n", cudaGetErrorString(status));
+        exit(G_MALLOC_ERROR);
+    }
+}
+/**
+* Metodo per la copia di dati da/alla GPU
+* Input: to, puntatore al buffer di destinazione
+         from, puntatore al buffer di ricezione 
+         size, intero che indica la dimensione dei buffer
+         op, operazione scelta (cudaMemcpyDeviceToHost, cudaMemcpyHostToDevice)
+*/
+void copyGPU(float *to, float *from, int size, cudaMemcpyKind op) {
+    cudaError_t status = cudaMemcpy(to, from, size, op);
+    if(status != cudaSuccess) {
+        printf("Errore nella copia di un elemento tra host e device %s\n", cudaGetErrorString(status));
+        exit(G_COPY_ERROR);
+    }
+}
 int main()
 {
     size_t size= (size_t)DIMENSIONE*DIMENSIONE*sizeof(float);
@@ -22,8 +56,8 @@ int main()
     float *deviceMatPrev= NULL;
     float *deviceMatNext= NULL;
 
-    cudaMallocManaged((void**) &deviceMatPrev,size);
-    cudaMallocManaged((void**) &deviceMatNext,size);
+    mallocGPU(&deviceMatPrev, size, true);
+    mallocGPU(&deviceMatNext, size, true);
 
     // TODO: initMat
     dim3 blockDim(DIMENSIONE, DIMENSIONE);
