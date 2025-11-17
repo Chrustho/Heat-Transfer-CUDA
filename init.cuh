@@ -1,20 +1,20 @@
-__global__ void initTemperature(float *mat, unsigned int gridRows, unsigned int gridCols, unsigned int initTemp, unsigned int topRows, unsigned botRows){
+__global__ void initTemperature(float *mat, unsigned int gridRows, unsigned int gridCols, unsigned int initTemp, unsigned int topRows, unsigned int botRows){
 
-    int tx= threadIdx.x;
-    int idx = blockIdx.x*blockDim.x+tx;
-    int size= gridRows*gridCols;
+    int col= blockIdx.x*blockDim.x+threadIdx.x;
+    int row= blockIdx.y*blockDim.y*threadIdx.y;
+    int idx= row*gridCols+col;
 
-
-    if (idx < size)
+    if (row < gridRows && col < gridCols)
     {
-        if (idx>gridCols*topRows && idx<size-gridCols*botRows)
+        if (row<topRows || row>= (gridRows-botRows))
         {
-            mat[idx]=0.0f;
+            mat[idx]=(float) initTemp;
         }else{
-            mat[idx]=20.0f;
+            mat[idx]=0.0f;
         }
+        
     }
-    
+
     
     
     
