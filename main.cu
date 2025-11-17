@@ -9,11 +9,13 @@
 
 #define outFilePrefix "Temperature"
 #define outFileExtension ".dat"
+#define DIMENSIONE 8
 
 #include "include/utility.h"
+#include "init.cu"
 int main()
 {
-    size_t size= (size_t)gridRows*gridCols*sizeof(float);
+    size_t size= (size_t)DIMENSIONE*DIMENSIONE*sizeof(float);
     float *matPrev = (float *) malloc(size);
     float *matNext = (float *) malloc(size);
 
@@ -24,20 +26,27 @@ int main()
     cudaMallocManaged((void**) &deviceMatNext,size);
 
     // TODO: initMat
+    dim3 blockDim(DIMENSIONE, DIMENSIONE);
+    dim3 gridDim((DIMENSIONE + DIMENSIONE - 1) / DIMENSIONE, 
+                 (DIMENSIONE + DIMENSIONE - 1) / DIMENSIONE);
+    initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, DIMENSIONE, DIMENSIONE, 20, 2,2);
+    cudaDeviceSynchronize();
+    printf("Accesso dalla CPU all'elemento [0][0]: %f\n", deviceMatPrev[0]);
+    printMatrix(deviceMatPrev, DIMENSIONE, DIMENSIONE);
 
     // TODO: salvataggio su file iniziale
 
     // inizio timer CUDA
 
-    for (size_t i=1; i <=nStep; i++)
-    {
-        // TODO  update region
-        kernelHeatGlobal<<<,>>>();
-        // TODO swap buffer
-        swapBuffers(deviceMatNext, deviceMatNext);
-
-    }
-
+//    for (size_t i=1; i <=nStep; i++)
+//    {
+//        // TODO  update region
+//        kernelHeatGlobal<<<,>>>();
+//        // TODO swap buffer
+//        swapBuffers(deviceMatNext, deviceMatNext);
+//
+//    }
+//
     // fine timer CUDA
 
     // stampa tempo
