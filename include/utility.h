@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define MAX_TO_PRINT 8
 
 //void saveTemparature(const char* fileBaseName, 
 //                     const char* fileExtension, 
@@ -51,10 +52,45 @@
 //  curr = tmp;
 //}
 //
-void printMatrix(float *mat, int w, int h) {
+void printMatrix2(float *mat, int w, int h) {
     for(int i = 0; i < w*h; i++) {
         printf("%f\t", mat[i]);
         if( (i+1) % w == 0 )
             printf("\n");
     }
+}
+
+void printMatrix(float *mat, int w, int h) {
+    
+    if (h == 0 || w == 0) {
+        printf("Matrice vuota.\n");
+        return;
+    }
+
+    int elementsToPrint = (w < MAX_TO_PRINT) ? w : MAX_TO_PRINT;
+    bool puntiniPrintati = false;
+
+
+    for (int i = 0; i < h; i++) {
+        
+        bool isTopRow = (i < nHotTopRows + 3);
+        bool isBottomRow = (i >= h - nHotBottomRows - 3);
+
+        if (isTopRow || isBottomRow) {
+            
+            for (int c = 0; c < elementsToPrint; c++) {
+                int index = i * w + c;
+                printf("%f\t", mat[index]);
+            }
+            printf("\n"); 
+
+        } 
+        else {
+            if (!puntiniPrintati) {
+                printf("...\n");
+                puntiniPrintati = true;
+            }
+        }
+    }
+
 }
