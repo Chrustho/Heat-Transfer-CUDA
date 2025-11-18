@@ -61,7 +61,10 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         for (size_t i = 0; i < nStep; i++)
         {
             updateNonTiled<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows);
-            cudaDeviceSynchronize();
+
+            float *temp = matPrev;
+            matPrev = matNext;
+            matNext = temp;
         }
 
         cudaEventRecord(stop,0);
@@ -73,6 +76,7 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         cudaEventDestroy(stop);
         printf("Tempo esecuzione blocco %d x %d: %f ms\n", dim1,dim2,ms);
 }
+
 int main()
 {
     size_t size= (size_t)gridRows*gridCols*sizeof(float);
@@ -107,17 +111,29 @@ int main()
             dim3 blockDim(dim1, dim2);
             dim3 gridDim((gridCols + dim1 - 1) / dim1, 
                          (gridRows + dim2 - 1) / dim2);
-           initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+            initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+            initTemperature<<<gridDim,blockDim>>>(deviceMatNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+
+            
+            if (i==2 && j==2)
+            {
+                printf("Matrice inzializzata\n");
+                printMatrix(deviceMatPrev,gridCols,gridRows);
+
+            }
            cudaDeviceSynchronize();
            if(i == 2 && j == 2) {
             printf("Matrice inizializzata:\n");
             printMatrix(deviceMatPrev, gridCols, gridRows); 
            }
            // salva su file
-           runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev);
+            runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev);
+            cudaDeviceSynchronize();
+           
+
            if (i==2 && j==2)
            {
-                printMatrix(matNext,gridRows,gridCols);
+                printMatrix(deviceMatPrev,gridCols,gridRows);
            }
 
         }
