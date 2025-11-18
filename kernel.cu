@@ -18,7 +18,7 @@ __global__ void updateNonTiled (float *MatNext, float *MatPrev, unsigned int nCo
             float ovest= MatPrev[Row*nCols+Col-1];
 
             float nw=MatPrev[(Row-1)*nCols+Col-1];
-            float ne=MatNext[(Row-1)*nCols+Col+1];
+            float ne=MatPrev[(Row-1)*nCols+Col+1];
             float sw=MatPrev[(Row+1)*nCols+Col-1];
             float se=MatPrev[(Row+1)*nCols+Col+1];
 
