@@ -113,15 +113,16 @@ int main()
                          (gridRows + dim2 - 1) / dim2);
             initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
             initTemperature<<<gridDim,blockDim>>>(deviceMatNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
-
+            cudaDeviceSynchronize();
             
-           if(i == 2 && j == 2) {
+           if (i == 2 && j == 2) {
             printf("Matrice inizializzata:\n");
             printMatrix(deviceMatPrev, gridCols, gridRows); 
            }
-           // salva su file
             runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev);
             cudaDeviceSynchronize();
+
+
            
 
            if (i==2 && j==2)

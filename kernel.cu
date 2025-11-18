@@ -10,7 +10,7 @@ __global__ void updateNonTiled (float *MatNext, float *MatPrev, unsigned int nCo
 
     if (Row < NRows && Col < nCols)
     {
-        if ((Col>0 && Col <(nCols-1)) && (Row>=topRows && Row<=(NRows-botRows)))
+        if ((Col>0 && Col <(nCols-1)) && (Row>=topRows && Row<=(NRows-botRows-1)))
         {
             float nord= MatPrev[(Row-1)*nCols+Col];
             float sud= MatPrev[(Row+1)*nCols+Col];
