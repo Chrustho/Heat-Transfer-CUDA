@@ -61,6 +61,7 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         for (size_t i = 0; i < nStep; i++)
         {
             updateNonTiled<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows);
+            cudaDeviceSynchronize();
         }
 
         cudaEventRecord(stop,0);
@@ -108,15 +109,15 @@ int main()
                          (gridRows + dim2 - 1) / dim2);
            initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
            cudaDeviceSynchronize();
-           //printMatrix(deviceMatPrev, gridCols, gridRows); 
+           if(i == 2 && j == 2) {
+            printf("Matrice inizializzata:\n");
+            printMatrix(deviceMatPrev, gridCols, gridRows); 
+           }
            // salva su file
-            runKernel(blockDim,gridDim,dim1,dim2,matNext,matPrev);
-            
-           
-
+           runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev);
            if (i==2 && j==2)
            {
-                printMatrix(matNext,gridCols,gridRows);
+                printMatrix(matNext,gridRows,gridCols);
            }
 
         }

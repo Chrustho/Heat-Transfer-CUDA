@@ -73,8 +73,8 @@ void printMatrix(float *mat, int w, int h) {
 
     for (int i = 0; i < h; i++) {
         
-        bool isTopRow = (i < nHotTopRows + 3);
-        bool isBottomRow = (i >= h - nHotBottomRows - 3);
+        bool isTopRow = (i < nHotTopRows + 2);
+        bool isBottomRow = (i >= h - nHotBottomRows - 2);
 
         if (isTopRow || isBottomRow) {
             
