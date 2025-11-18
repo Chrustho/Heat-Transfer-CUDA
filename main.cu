@@ -115,13 +115,6 @@ int main()
             initTemperature<<<gridDim,blockDim>>>(deviceMatNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
 
             
-            if (i==2 && j==2)
-            {
-                printf("Matrice inzializzata\n");
-                printMatrix(deviceMatPrev,gridCols,gridRows);
-
-            }
-           cudaDeviceSynchronize();
            if(i == 2 && j == 2) {
             printf("Matrice inizializzata:\n");
             printMatrix(deviceMatPrev, gridCols, gridRows); 
