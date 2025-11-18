@@ -12,11 +12,11 @@ __global__ void initTemperature(float *mat,
 
     if (row < rows && col < cols)
     {
-        if (row<topRows || row>= (rows-botRows))
+        if (row>topRows && row<= (rows-botRows))
         {
-            mat[idx]=(float) initTemp;
-        }else{
             mat[idx]=0.0f;
+        }else{
+            mat[idx]=(float) initTemp;
         }
         
     }

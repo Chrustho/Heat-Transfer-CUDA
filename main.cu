@@ -14,6 +14,7 @@
 #define G_COPY_ERROR -2
 #include "include/utility.h"
 #include "include/init.cuh"
+#include "include/kernel.cuh"
 /**
 * Metodo per l'allocazione di un'area di memoria sulla GPU
 * Input: d, puntatore ad un puntatore di buffer di memoria
@@ -51,7 +52,7 @@ void copyGPU(float *to, float *from, int size, cudaMemcpyKind op) {
 * Metodo per l'esecuzione del kernel e la valutazione in ms del tempo di esecuzione.
 * Questo esegue una simulazione parallela per un numero di passi pari a nStep.
 */
-void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2) {
+void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, float *matPrev) {
         cudaEvent_t start, stop;
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
@@ -59,7 +60,7 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2) {
 
         for (size_t i = 0; i < nStep; i++)
         {
-            // chiama kernel
+            updateNonTiled<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows);
         }
 
         cudaEventRecord(stop,0);
@@ -69,6 +70,7 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2) {
         cudaEventElapsedTime(&ms, start, stop);
         cudaEventDestroy(start);
         cudaEventDestroy(stop);
+        printf("Tempo esecuzione blocco %d x %d: %f ms\n", dim1,dim2,ms);
 }
 int main()
 {
@@ -108,14 +110,17 @@ int main()
            cudaDeviceSynchronize();
            //printMatrix(deviceMatPrev, gridCols, gridRows); 
            // salva su file
-
-            //runKernel(blockDim, gridDim, dim1, dim2);
+            runKernel(blockDim,gridDim,dim1,dim2,matNext,matPrev);
             
-            // salvo su file
+           
+
+           if (i==2 && j==2)
+           {
+                printMatrix(matNext,gridCols,gridRows);
+           }
+
         }
     }
-
-
 
     return 0;
 }
