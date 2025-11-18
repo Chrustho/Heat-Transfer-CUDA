@@ -57,11 +57,12 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
         cudaEventRecord(start,0);
+        size_t sharedMemSize = (dim1 * dim2) * sizeof(float);
 
         for (size_t i = 0; i < nStep; i++)
         {
-            updateNonTiled<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows);
-
+            updateTiled<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
+            cudaDeviceSynchronize();
             float *temp = matPrev;
             matPrev = matNext;
             matNext = temp;
@@ -114,21 +115,20 @@ int main()
             initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
             initTemperature<<<gridDim,blockDim>>>(deviceMatNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
             cudaDeviceSynchronize();
-            
-           if (i == 2 && j == 2) {
+
+            if (i == 2 && j == 2) {
             printf("Matrice inizializzata:\n");
             printMatrix(deviceMatPrev, gridCols, gridRows); 
-           }
+            }
+
             runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev);
             cudaDeviceSynchronize();
 
 
-           
-
-           if (i==2 && j==2)
-           {
-                printMatrix(deviceMatPrev,gridCols,gridRows);
-           }
+            if (i==2 && j==2)
+            {
+            printMatrix(deviceMatPrev,gridCols,gridRows);
+            }
 
         }
     }
