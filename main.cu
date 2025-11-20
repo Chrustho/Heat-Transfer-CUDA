@@ -62,7 +62,7 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         for (size_t i = 0; i < nStep; i++)
         {
             //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
-            updateNonTiled<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+            updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
             cudaDeviceSynchronize();
             float *temp = matPrev;
             matPrev = matNext;
