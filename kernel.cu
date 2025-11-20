@@ -297,3 +297,59 @@ __global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev,
         MatNext[globalIdx] = res;
     }
 }
+
+__global__ void tiled_wH_gemini(float* __restrict__ MatNext, 
+                              const float* __restrict__ MatPrev, 
+                              int nCols, int nRows, 
+                              int topRows, int botRows) {
+
+    extern __shared__ float s_tile[];
+
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+    int bx = blockDim.x;
+    int by = blockDim.y;
+
+    int s_stride = bx + 1;
+    int s_idx = ty * s_stride + tx;
+
+    int out_dim_x = bx - 2;
+    int out_dim_y = by - 2;
+
+    int global_col = blockIdx.x * out_dim_x + tx - 1;
+    int global_row = blockIdx.y * out_dim_y + ty - 1;
+
+    float val = 0.0f;
+    if (global_col >= 0 && global_col < nCols && global_row >= 0 && global_row < nRows) {
+        val = MatPrev[global_row * nCols + global_col];
+    }
+    s_tile[s_idx] = val;
+
+    __syncthreads();
+
+    if (tx >= 1 && tx < bx - 1 && ty >= 1 && ty < by - 1) {
+        
+        int write_row = global_row;
+        int write_col = global_col;
+
+        if (write_row >= topRows && write_row < (nRows - botRows) && 
+            write_col > 0 && write_col < (nCols - 1)) {
+            
+            float* s_ptr = &s_tile[s_idx];
+
+            float n  = s_ptr[-s_stride];
+            float s  = s_ptr[s_stride];
+            float w  = s_ptr[-1];
+            float e  = s_ptr[1];
+            
+            float nw = s_ptr[-s_stride - 1];
+            float ne = s_ptr[-s_stride + 1];
+            float sw = s_ptr[s_stride - 1];
+            float se = s_ptr[s_stride + 1];
+
+            float res = (4.0f * (n + s + w + e) + nw + ne + sw + se) * 0.05f;
+
+            MatNext[write_row * nCols + write_col] = res;
+        }
+    }
+}

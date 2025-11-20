@@ -59,17 +59,55 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         cudaEventRecord(start,0);
         size_t sharedMemSize = ((dim1 +1) * dim2) * sizeof(float);
         size_t sharemMemSize_wH = (dim1 + 2) * (dim2 + 2) * sizeof(float);
+        size_t sharedMemGemini = (dim1 + 1) * dim2 * sizeof(float);
 
+        //for (size_t i = 0; i < nStep; i++)
+        //{
+        //    //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
+        //    //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
+        //    updateNonTiled<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+        //    cudaDeviceSynchronize();
+        //    float *temp = matPrev;
+        //    matPrev = matNext;
+        //    matNext = temp;
+        //}
         for (size_t i = 0; i < nStep; i++)
         {
             //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
-            updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-            //tiled_wH_corrected<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+            //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
+            tiled_wH_gemini<<<gridDim,blockDim, sharedMemGemini>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
             cudaDeviceSynchronize();
             float *temp = matPrev;
             matPrev = matNext;
             matNext = temp;
         }
+        //initTemperature<<<gridDim,blockDim>>>(matPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+        //initTemperature<<<gridDim,blockDim>>>(matNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+        //cudaDeviceSynchronize();
+        //for (size_t i = 0; i < nStep; i++)
+        //{
+        //    //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
+        //    //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
+        //    updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
+        //    //tiled_wH_corrected<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+        //    cudaDeviceSynchronize();
+        //    float *temp = matPrev;
+        //    matPrev = matNext;
+        //    matNext = temp;
+        //}
+        //initTemperature<<<gridDim,blockDim>>>(matPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+        //initTemperature<<<gridDim,blockDim>>>(matNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
+        //cudaDeviceSynchronize();
+        //for (size_t i = 0; i < nStep; i++)
+        //{
+        //    //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
+        //    //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
+        //    updateTiledOptimizedNormale<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
+        //    cudaDeviceSynchronize();
+        //    float *temp = matPrev;
+        //    matPrev = matNext;
+        //    matNext = temp;
+        //}
 
         cudaEventRecord(stop,0);
         cudaEventSynchronize(stop);
@@ -113,6 +151,7 @@ int main()
                 continue; 
             }
 
+
             dim3 blockDim(dim1, dim2);
             dim3 gridDim((gridCols + dim1 - 1) / dim1, 
                          (gridRows + dim2 - 1) / dim2);
@@ -121,10 +160,9 @@ int main()
                 initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
                 initTemperature<<<gridDim,blockDim>>>(deviceMatNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
                 cudaDeviceSynchronize();
-
                 if (i == 2 && j == 2) {
-                printf("Matrice inizializzata:\n");
-                printMatrix(deviceMatPrev, gridCols, gridRows); 
+                  printf("Matrice inizializzata:\n");
+                  printMatrix(deviceMatPrev, gridCols, gridRows); 
                 }
 
                 runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev);
