@@ -179,8 +179,8 @@ __global__ void tiled_wH(float *MatNext, float *MatPrev,
     int tid = tr * tileX + tc; 
     int globalIdx = Row * nCols + Col;
 
-    int i_halo= Row-floor(3/2);
-    int j_halo= Col-floor(3/2);
+    int i_halo= Row-1;
+    int j_halo= Col-1;
 
     if ((0<=i_halo)&&(i_halo<NRows) && (0<=j_halo) &&(j_halo<nCols))
     {
