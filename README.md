@@ -1,6 +1,4 @@
-# Heat-Transfer-CUDA
----
-# Parallelizzazione CUDA di un Modello di Trasferimento di Calore
+# Heat-Transfer-CUDA: Parallelizzazione CUDA di un Modello di Trasferimento di Calore
 
 ## Introduzione
 Questo progetto, sviluppato nell'ambito del corso di *Massively Parallel Programming on GPUs* presso l'Università della Calabria, implementa una simulazione di trasferimento di calore in stato non stazionario su una griglia bidimensionale. Il sistema è modellato attraverso l'uso di Automi Cellulari (CA), sfruttando la potenza di calcolo delle GPU NVIDIA per l'elaborazione parallela di griglie dense.
@@ -74,6 +72,6 @@ Lanciare l'eseguibile per avviare la suite di test:
 L'output fornirà i tempi di esecuzione per le diverse combinazioni di implementazione e dimensione dei blocchi, permettendo un confronto diretto dell'efficienza delle ottimizzazioni introdotte.
 
 
-**Autori:** Christian Bruni, Francesco Tieri 
-**Corso:** Massively Parallel Programming on GPUs - Università della Calabria
-**Anno Accademico:** 2025-2026
+**Autori:** Christian Bruni, Francesco Tieri.
+**Corso:** Massively Parallel Programming on GPUs - Università della Calabria.
+**Anno Accademico:** 2025-2026.
