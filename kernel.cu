@@ -1,6 +1,6 @@
 #include "include/kernel.cuh"
 
-__global__ void updateNonTiled (float *MatNext, float *MatPrev, 
+__global__ void updateGlobal (float *MatNext, float *MatPrev, 
                                 unsigned int nCols, unsigned int NRows, 
                                 unsigned int topRows, unsigned int botRows){
 
@@ -31,7 +31,7 @@ __global__ void updateNonTiled (float *MatNext, float *MatPrev,
     }
 }
 
-__global__ void updateTiledOptimizedNormale(float *MatNext, float *MatPrev, 
+__global__ void updateTiled(float *MatNext, float *MatPrev, 
                                             unsigned int nCols, unsigned int NRows, 
                                             unsigned int topRows, unsigned int botRows, 
                                             const unsigned int tileX, const int tileY) {
@@ -85,7 +85,7 @@ __global__ void updateTiledOptimizedNormale(float *MatNext, float *MatPrev,
     }
 }
 
-__global__ void updateTiledOptimized(float *MatNext, float *MatPrev, 
+__global__ void updateTiledPadding(float *MatNext, float *MatPrev, 
                                      unsigned int nCols, unsigned int NRows, 
                                      unsigned int topRows, unsigned int botRows, 
                                      const unsigned int tileX, const int tileY) {
@@ -131,54 +131,9 @@ __global__ void updateTiledOptimized(float *MatNext, float *MatPrev,
     }
 }
 
-__global__ void tiled_wH(float *MatNext, float *MatPrev, 
-                         unsigned int nCols, unsigned int NRows, 
-                         unsigned int topRows, unsigned int botRows, 
-                         const unsigned int tileX, const int tileY) {
 
-    extern __shared__ float tile[]; 
 
-    int tc = threadIdx.x;
-    int tr = threadIdx.y;
-    int Row = blockIdx.y * blockDim.y + tr;
-    int Col = blockIdx.x * blockDim.x + tc;
-    
-    int tid = tr * tileX + tc; 
-    int globalIdx = Row * nCols + Col;
-
-    int i_halo= Row-1;
-    int j_halo= Col-1;
-
-    if ((0<=i_halo)&&(i_halo<NRows) && (0<=j_halo) &&(j_halo<nCols))
-    {
-        tile[tid]=MatPrev[i_halo*nCols+j_halo];
-    }else{
-        tile[tid]=0.0f;
-    }
-
-    __syncthreads();
-
-    if ((Col > 0 && Col < (nCols - 1)) && (Row >= topRows && Row <= (NRows - botRows - 1)))
-    {
-        float nord, sud, est, ovest, nw, ne, sw, se;
-
-        nord  = tile[(tr - 1) * tileX + tc];
-        sud   = tile[(tr + 1) * tileX + tc];
-        ovest = tile[tr * tileX + (tc - 1)];
-        est   = tile[tr * tileX + (tc + 1)];
-
-        nw    = tile[(tr - 1) * tileX + (tc - 1)];
-        ne    = tile[(tr - 1) * tileX + (tc + 1)];
-        sw    = tile[(tr + 1) * tileX + (tc - 1)];
-        se    = tile[(tr + 1) * tileX + (tc + 1)];
-        
-        float primaParz = (4.0f * (nord + sud + ovest + est)) + nw + ne + sw + se;
-        MatNext[globalIdx] = primaParz * 0.05f;
-    }
-
-}
-
-__global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev, 
+__global__ void updateTiled_wH(float *MatNext, const float *MatPrev, 
                                    int nCols, int nRows, 
                                    int topRows, int botRows) {
 
@@ -191,9 +146,8 @@ __global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev,
     int row = blockIdx.y * by + ty;
     
     extern __shared__ float s_tile[];
-    int s_w = bx + 2; // Stride 
+    int s_w = bx + 2;  
 
-    // Indice lineare del in zona centrale
     int s_idx = (ty + 1) * s_w + (tx + 1);
     int globalIdx = row * nCols + col;
 
@@ -232,7 +186,7 @@ __global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev,
 
     if (ty == by - 1) {
         int r_next = row + 1;
-        int s_offset = (by + 1) * s_w; // Offset per l'ultima riga in shared
+        int s_offset = (by + 1) * s_w; 
         
         if (r_next < nRows) {
             if (col < nCols)
@@ -257,7 +211,7 @@ __global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev,
 
     if (tx == 0) {
         int c_prev = col - 1;
-        int s_pos = (ty + 1) * s_w; // Colonna 0 della shared memory
+        int s_pos = (ty + 1) * s_w; 
         if (c_prev >= 0 && row < nRows)
             s_tile[s_pos] = MatPrev[row * nCols + c_prev];
         else
@@ -266,7 +220,7 @@ __global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev,
 
     if (tx == bx - 1) {
         int c_next = col + 1;
-        int s_pos = (ty + 1) * s_w + (bx + 1); // Ultima colonna shared memory
+        int s_pos = (ty + 1) * s_w + (bx + 1); 
         if (c_next < nCols && row < nRows)
             s_tile[s_pos] = MatPrev[row * nCols + c_next];
         else
@@ -281,15 +235,15 @@ __global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev,
 
         float* s_row_ptr = &s_tile[(ty + 1) * s_w]; 
         
-        float n  = s_tile[ty * s_w + (tx + 1)];     // Riga sopra
-        float s  = s_tile[(ty + 2) * s_w + (tx + 1)]; // Riga sotto
-        float w  = s_row_ptr[tx];                   // Sinistra
-        float e  = s_row_ptr[tx + 2];               // Destra
+        float n  = s_tile[ty * s_w + (tx + 1)];   
+        float s  = s_tile[(ty + 2) * s_w + (tx + 1)]; 
+        float w  = s_row_ptr[tx];                  
+        float e  = s_row_ptr[tx + 2];               
 
-        float nw = s_tile[ty * s_w + tx];           // Alto-Sinistra
-        float ne = s_tile[ty * s_w + (tx + 2)];     // Alto-Destra
-        float sw = s_tile[(ty + 2) * s_w + tx];     // Basso-Sinistra
-        float se = s_tile[(ty + 2) * s_w + (tx + 2)]; // Basso-Destra
+        float nw = s_tile[ty * s_w + tx];          
+        float ne = s_tile[ty * s_w + (tx + 2)];     
+        float sw = s_tile[(ty + 2) * s_w + tx];     
+        float se = s_tile[(ty + 2) * s_w + (tx + 2)]; 
         
 
         float res = (4.0f * (n + s + w + e) + nw + ne + sw + se) * 0.05f;
@@ -298,58 +252,3 @@ __global__ void tiled_wH_corrected(float *MatNext, const float *MatPrev,
     }
 }
 
-__global__ void tiled_wH_gemini(float* __restrict__ MatNext, 
-                              const float* __restrict__ MatPrev, 
-                              int nCols, int nRows, 
-                              int topRows, int botRows) {
-
-    extern __shared__ float s_tile[];
-
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
-    int bx = blockDim.x;
-    int by = blockDim.y;
-
-    int s_stride = bx + 1;
-    int s_idx = ty * s_stride + tx;
-
-    int out_dim_x = bx - 2;
-    int out_dim_y = by - 2;
-
-    int global_col = blockIdx.x * out_dim_x + tx - 1;
-    int global_row = blockIdx.y * out_dim_y + ty - 1;
-
-    float val = 0.0f;
-    if (global_col >= 0 && global_col < nCols && global_row >= 0 && global_row < nRows) {
-        val = MatPrev[global_row * nCols + global_col];
-    }
-    s_tile[s_idx] = val;
-
-    __syncthreads();
-
-    if (tx >= 1 && tx < bx - 1 && ty >= 1 && ty < by - 1) {
-        
-        int write_row = global_row;
-        int write_col = global_col;
-
-        if (write_row >= topRows && write_row < (nRows - botRows) && 
-            write_col > 0 && write_col < (nCols - 1)) {
-            
-            float* s_ptr = &s_tile[s_idx];
-
-            float n  = s_ptr[-s_stride];
-            float s  = s_ptr[s_stride];
-            float w  = s_ptr[-1];
-            float e  = s_ptr[1];
-            
-            float nw = s_ptr[-s_stride - 1];
-            float ne = s_ptr[-s_stride + 1];
-            float sw = s_ptr[s_stride - 1];
-            float se = s_ptr[s_stride + 1];
-
-            float res = (4.0f * (n + s + w + e) + nw + ne + sw + se) * 0.05f;
-
-            MatNext[write_row * nCols + write_col] = res;
-        }
-    }
-}

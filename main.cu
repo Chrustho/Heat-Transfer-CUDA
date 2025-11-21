@@ -15,6 +15,7 @@
 #include "include/utility.h"
 #include "include/init.cuh"
 #include "include/kernel.cuh"
+
 /**
 * Metodo per l'allocazione di un'area di memoria sulla GPU
 * Input: d, puntatore ad un puntatore di buffer di memoria
@@ -34,6 +35,8 @@ void mallocGPU(float **d, int qnt, bool isManaged) {
         exit(G_MALLOC_ERROR);
     }
 }
+
+
 /**
 * Metodo per la copia di dati da/alla GPU
 * Input: to, puntatore al buffer di destinazione
@@ -48,6 +51,8 @@ void copyGPU(float *to, float *from, int size, cudaMemcpyKind op) {
         exit(G_COPY_ERROR);
     }
 }
+
+
 /**
 * Metodo per l'esecuzione del kernel e la valutazione in ms del tempo di esecuzione.
 * Questo esegue una simulazione parallela per un numero di passi pari a nStep.
@@ -61,53 +66,18 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         size_t sharemMemSize_wH = (dim1 + 2) * (dim2 + 2) * sizeof(float);
         size_t sharedMemGemini = (dim1 + 1) * dim2 * sizeof(float);
 
-        //for (size_t i = 0; i < nStep; i++)
-        //{
-        //    //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
-        //    //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-        //    updateNonTiled<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
-        //    cudaDeviceSynchronize();
-        //    float *temp = matPrev;
-        //    matPrev = matNext;
-        //    matNext = temp;
-        //}
+        
         for (size_t i = 0; i < nStep; i++)
         {
-            //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
             //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
             tiled_wH_gemini<<<gridDim,blockDim, sharedMemGemini>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+            //tiled_wH_corrected<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+
             cudaDeviceSynchronize();
             float *temp = matPrev;
             matPrev = matNext;
             matNext = temp;
         }
-        //initTemperature<<<gridDim,blockDim>>>(matPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
-        //initTemperature<<<gridDim,blockDim>>>(matNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
-        //cudaDeviceSynchronize();
-        //for (size_t i = 0; i < nStep; i++)
-        //{
-        //    //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
-        //    //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-        //    updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-        //    //tiled_wH_corrected<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
-        //    cudaDeviceSynchronize();
-        //    float *temp = matPrev;
-        //    matPrev = matNext;
-        //    matNext = temp;
-        //}
-        //initTemperature<<<gridDim,blockDim>>>(matPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
-        //initTemperature<<<gridDim,blockDim>>>(matNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
-        //cudaDeviceSynchronize();
-        //for (size_t i = 0; i < nStep; i++)
-        //{
-        //    //updateTiledOptimized<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotBottomRows,nHotTopRows,dim1,dim2);
-        //    //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-        //    updateTiledOptimizedNormale<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-        //    cudaDeviceSynchronize();
-        //    float *temp = matPrev;
-        //    matPrev = matNext;
-        //    matNext = temp;
-        //}
 
         cudaEventRecord(stop,0);
         cudaEventSynchronize(stop);
