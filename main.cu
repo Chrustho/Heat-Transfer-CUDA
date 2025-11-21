@@ -69,8 +69,7 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         
         for (size_t i = 0; i < nStep; i++)
         {
-            updateTiledPadding<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-
+            updateGlobal<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
             cudaDeviceSynchronize();
             float *temp = matPrev;
             matPrev = matNext;
@@ -99,7 +98,6 @@ int main()
     mallocGPU(&deviceMatPrev, size, true);
     mallocGPU(&deviceMatNext, size, true);
 
-
     int dims[]={8,16,32};
     int numRun=4;
     for (size_t i = 0; i < 3; i++)
@@ -108,13 +106,11 @@ int main()
         {
             int dim1 = dims[i]; 
             int dim2 = dims[j]; 
-
             
             if (dim1 * dim2 > 1024)
             {
                 continue; 
             }
-
 
             dim3 blockDim(dim1, dim2);
             dim3 gridDim((gridCols + dim1 - 1) / dim1, 
@@ -138,8 +134,6 @@ int main()
                 printMatrix(deviceMatPrev,gridCols,gridRows);
                 }
             }
-            
-
         }
     }
 

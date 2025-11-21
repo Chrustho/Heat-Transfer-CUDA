@@ -225,7 +225,6 @@ __global__ void updateTiled_wH(float *MatNext, const float *MatPrev,
 
     __syncthreads(); 
 
-
     if (row >= topRows && row < (nRows - botRows) && col > 0 && col < (nCols - 1)) {
         
 
