@@ -23,3 +23,4 @@ __global__ void tiled_wH(float *MatNext, float *MatPrev,
                          unsigned int nCols, unsigned int NRows, 
                          unsigned int topRows, unsigned int botRows, 
                          const unsigned int tileX, const int tileY);
+
