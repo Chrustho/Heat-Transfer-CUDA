@@ -9,25 +9,22 @@ __global__ void updateGlobal (float *MatNext, float *MatPrev,
     int Row = blockIdx.y * blockDim.y + tr;
     int Col = blockIdx.x * blockDim.x + tc;
 
-    if (Row < NRows && Col < nCols)
+    if ((Col>0 && Col <(nCols-1)) && (Row>=topRows && Row<=(NRows-botRows-1)))
     {
-        if ((Col>0 && Col <(nCols-1)) && (Row>=topRows && Row<=(NRows-botRows-1)))
-        {
-            float nord= MatPrev[(Row-1)*nCols+Col];
-            float sud= MatPrev[(Row+1)*nCols+Col];
-            float est= MatPrev[Row*nCols+Col+1];
-            float ovest= MatPrev[Row*nCols+Col-1];
+        float nord= MatPrev[(Row-1)*nCols+Col];
+        float sud= MatPrev[(Row+1)*nCols+Col];
+        float est= MatPrev[Row*nCols+Col+1];
+        float ovest= MatPrev[Row*nCols+Col-1];
 
-            float nw=MatPrev[(Row-1)*nCols+Col-1];
-            float ne=MatPrev[(Row-1)*nCols+Col+1];
-            float sw=MatPrev[(Row+1)*nCols+Col-1];
-            float se=MatPrev[(Row+1)*nCols+Col+1];
+        float nw=MatPrev[(Row-1)*nCols+Col-1];
+        float ne=MatPrev[(Row-1)*nCols+Col+1];
+        float sw=MatPrev[(Row+1)*nCols+Col-1];
+        float se=MatPrev[(Row+1)*nCols+Col+1];
 
-            float primaParz= (4.0f*(nord+sud+ovest+est))+ nw+ne+sw+se;
-            float nextValue= (float) primaParz*0.05f;
+        float primaParz= (4.0f*(nord+sud+ovest+est))+ nw+ne+sw+se;
+        float nextValue= (float) primaParz*0.05f;
 
-            MatNext[Row*nCols+Col]=nextValue;
-        }
+        MatNext[Row*nCols+Col]=nextValue;
     }
 }
 
@@ -177,7 +174,6 @@ __global__ void updateTiled_wH(float *MatNext, const float *MatPrev,
                 s_tile[bx + 1] = (c_next < nCols) ? MatPrev[r_prev * nCols + c_next] : 0.0f;
             }
         } else {
-            // Bordo superiore del dominio: tutto a 0
             s_tile[tx + 1] = 0.0f;
             if (tx == 0) s_tile[0] = 0.0f;
             if (tx == bx - 1) s_tile[bx + 1] = 0.0f;

@@ -69,9 +69,7 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         
         for (size_t i = 0; i < nStep; i++)
         {
-            //updateTiledOptimized<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
-            tiled_wH_gemini<<<gridDim,blockDim, sharedMemGemini>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
-            //tiled_wH_corrected<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+            updateTiledPadding<<<gridDim,blockDim, sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows, dim1, dim2);
 
             cudaDeviceSynchronize();
             float *temp = matPrev;
@@ -100,11 +98,7 @@ int main()
 
     mallocGPU(&deviceMatPrev, size, true);
     mallocGPU(&deviceMatNext, size, true);
-    //int threadsInit = 1024;
-    //int blocksInit = (int)(((size/ sizeof(float)) + threadsInit - 1) / threadsInit);
-    //initTemperature<<<blocksInit,threadsInit>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
-    //cudaDeviceSynchronize();
-    //salva su file
+
 
     int dims[]={8,16,32};
     int numRun=4;
