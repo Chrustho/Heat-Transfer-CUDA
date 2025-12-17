@@ -57,19 +57,21 @@ void copyGPU(float *to, float *from, int size, cudaMemcpyKind op) {
 * Metodo per l'esecuzione del kernel e la valutazione in ms del tempo di esecuzione.
 * Questo esegue una simulazione parallela per un numero di passi pari a nStep.
 */
-void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, float *matPrev) {
+void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, float *matPrev, float *ptrBestCurrentTIme) {
         cudaEvent_t start, stop;
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
         cudaEventRecord(start,0);
         size_t sharedMemSize = ((dim1 +1) * dim2) * sizeof(float);
-        size_t sharemMemSize_wH = (dim1 + 2) * (dim2 + 2) * sizeof(float);
-        size_t sharedMemGemini = (dim1 + 1) * dim2 * sizeof(float);
+        size_t sharedMemSize_wH = (dim1 + 2) * (dim2 + 2) * sizeof(float);
 
         
         for (size_t i = 0; i < nStep; i++)
         {
-            updateGlobal<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+            //updateGlobal<<<gridDim,blockDim>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
+            //updateTiled<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows,dim1,dim2);
+            updateTiledPadding<<<gridDim,blockDim,sharedMemSize>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows,dim1,dim2);
+            //updateTiled_wH<<<gridDim,blockDim,sharemMemSize_wH>>>(matNext,matPrev,gridCols,gridRows,nHotTopRows,nHotBottomRows);
             cudaDeviceSynchronize();
             float *temp = matPrev;
             matPrev = matNext;
@@ -83,6 +85,11 @@ void runKernel(dim3 blockDim, dim3 gridDim, int dim1, int dim2, float *matNext, 
         cudaEventElapsedTime(&ms, start, stop);
         cudaEventDestroy(start);
         cudaEventDestroy(stop);
+        if (ms<*ptrBestCurrentTIme)
+        {
+            *ptrBestCurrentTIme=ms;
+        }
+        
         printf("Tempo esecuzione blocco %d x %d: %f ms\n", dim1,dim2,ms);
 }
 
@@ -100,6 +107,7 @@ int main()
 
     int dims[]={8,16,32};
     int numRun=4;
+    float *besTimes= (float *) malloc(9*sizeof(float)); 
     for (size_t i = 0; i < 3; i++)
     {
         for (size_t j = 0; j < 3; j++)
@@ -115,25 +123,22 @@ int main()
             dim3 blockDim(dim1, dim2);
             dim3 gridDim((gridCols + dim1 - 1) / dim1, 
                          (gridRows + dim2 - 1) / dim2);
+            float bestBlockTime= 100000000.0f;
             for (size_t k = 0; k < numRun; k++)
             {
                 initTemperature<<<gridDim,blockDim>>>(deviceMatPrev, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
                 initTemperature<<<gridDim,blockDim>>>(deviceMatNext, gridRows, gridCols, initialHotTemperature, nHotTopRows,nHotBottomRows);
                 cudaDeviceSynchronize();
-                if (i == 2 && j == 2) {
-                  printf("Matrice inizializzata:\n");
-                  printMatrix(deviceMatPrev, gridCols, gridRows); 
-                }
 
-                runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev);
+                runKernel(blockDim,gridDim,dim1,dim2,deviceMatNext,deviceMatPrev,&bestBlockTime);
+
                 cudaDeviceSynchronize();
 
-
-                if (i==2 && j==2)
-                {
-                printMatrix(deviceMatPrev,gridCols,gridRows);
-                }
             }
+            printf("\n");
+            printf("Miglior tempo per blocco %d x %d: %f ms\n\n", dim1,dim2,bestBlockTime);
+            printf("\n");
+            besTimes[i*3 + j]= bestBlockTime;
         }
     }
 
